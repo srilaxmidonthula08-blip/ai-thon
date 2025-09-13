@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Intelligent Personal Finance Manager — Students</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #0b1220;
+            --muted: #94a3b8;
+            --accent: #60a5fa;
+            --success: #34d399;
+            --danger: #fb7185
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: Inter, ui-sans-serif, system-ui, Segoe UI, Roboto, "Helvetica Neue", Arial
+        }
+
+        body {
+            margin: 0;
+            background: linear-gradient(180deg, #071029 0%, #071833 100%);
+            color: #e6eef8
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 28px auto;
+            padding: 20px
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            gap: 18px
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 20px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 18px;
+            margin-top: 18px
+        }
+
+        .card {
+            background: var(--card);
+            padding: 14px;
+            border-radius: 12px;
+            box-shadow: 0 6px 18px rgba(2, 6, 23, .6)
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 6px
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, .04);
+            background: transparent;
+            color: inherit
+        }
+
+        button {
+            background: var(--accent);
+            border: none;
+            padding: 10px 12px;
+            border-radius: 10px;
+            color: #06263a;
+            cursor: pointer;
+            font-weight: 600
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px
+        }
+
+        th,
+        td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px dashed rgba(255, 255, 255, .03);
+            font-size: 13px
+        }
+
+        .small {
+            font-size: 12px
+        }
+
+        .progress {
+            height: 12px;
+            background: rgba(255, 255, 255, .04);
+            border-radius: 8px;
+            overflow: hidden
+        }
+
+        .progress>i {
+            display: block;
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #7c3aed);
+        }
+
+        .alert {
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 10px
+        }
+
+        .alert.warn {
+            background: rgba(255, 165, 0, .08);
+            color: #ffd8a8
+        }
+
+        .alert.danger {
+            background: rgba(255, 0, 0, .06);
+            color: #ffd6dd
+        }
+
+        .flex {
+            display: flex;
+            gap: 12px;
+            align-items: center
+        }
+
+        .col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .chart-wrap {
+            height: 220px
+        }
+
+        footer {
+            margin-top: 18px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        .tag {
+            background: rgba(255, 255, 255, .03);
+            padding: 6px 8px;
+            border-radius: 999px;
+            font-size: 12px
+        }
+
+        @media(max-width:900px) {
+            .grid {
+                grid-template-columns: 1fr
+            }
+
+            .container {
+                padding: 12px
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div
+                style="width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:700;color:#06263a">
+                SF</div>
+            <div>
+                <h1>Intelligent Personal Finance Manager — Students</h1>
+                <div class="muted">Quick budgeting, auto-categorization, predictive insights & alerts</div>
+            </div>
+        </header>
+
+        <div class="grid">
+            <div>
+                <div class="card" id="mainCard">
+                    <div class="flex" style="justify-content:space-between;align-items:flex-start">
+                        <div>
+                            <div class="muted">Balance</div>
+                            <div style="font-size:22px;font-weight:700;margin-top:6px">₹ <span id="balance">0.00</span>
+                            </div>
+                            <div class="small muted">Monthly budget: ₹ <span id="monthlyBudget">0</span></div>
+                        </div>
+                        <div style="width:240px">
+                            <label>Set monthly budget (₹)</label>
+                            <div style="display:flex;gap:8px">
+                                <input id="budgetInput" placeholder="Enter budget" type="number" />
+                                <button id="setBudgetBtn">Set</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr style="border:none;height:1px;background:rgba(255,255,255,.02);margin:12px 0">
+
+                    <div style="display:flex;gap:12px;flex-wrap:wrap">
+                        <div style="flex:1;min-width:220px">
+                            <label>Add expense / income</label>
+                            <input id="desc" placeholder="e.g., Coffee at campus cafe" />
+                            <div style="display:flex;gap:8px;margin-top:8px">
+                                <input id="amount" placeholder="Amount (use negative for expense)" type="number" />
+                                <select id="type">
+                                    <option value="expense">Expense</option>
+                                    <option value="income">Income</option>
+                                </select>
+                                <button id="addBtn">Add</button>
+                            </div>
+                            <div class="muted small" style="margin-top:8px">Auto-category: <span id="autoCat">—</span>
+                            </div>
+                        </div>
+
+                        <div style="width:220px">
+                            <label>Quick tags</label>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+                                <button class="tagBtn tag">Groceries</button>
+                                <button class="tagBtn tag">Transport</button>
+                                <button class="tagBtn tag">Eating Out</button>
+                                <button class="tagBtn tag">Books</button>
+                                <button class="tagBtn tag">Utilities</button>
+                            </div>
+                        </div>
+
+                        <div style="flex:1;min-width:240px">
+                            <label>Category budgets</label>
+                            <div id="categoryBudgets" style="display:flex;gap:8px;flex-direction:column;margin-top:8px">
+                            </div>
+                            <div style="margin-top:8px;display:flex;gap:8px">
+                                <input id="catName" placeholder="Category name" />
+                                <input id="catBudget" placeholder="Monthly ₹" type="number" />
+                                <button id="addCatBtn">Add</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr style="border:none;height:1px;background:rgba(255,255,255,.02);margin:12px 0">
+
+                    <div style="display:flex;gap:12px;flex-wrap:wrap">
+                        <div style="flex:1;min-width:260px" class="col">
+                            <div class="muted">Spending overview</div>
+                            <div class="chart-wrap card" style="padding:8px">
+                                <canvas id="pieChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div style="width:320px" class="col">
+                            <div class="muted">Prediction & recommendations</div>
+                            <div class="card" style="padding:10px">
+                                <div class="small muted">Projected month-end spend</div>
+                                <div style="font-weight:700;margin-top:6px">₹ <span id="projected">0.00</span></div>
+                                <div class="small muted" style="margin-top:8px">Recommendation</div>
+                                <div id="recommendation" style="margin-top:6px">—</div>
+                                <div style="margin-top:10px"><button id="optimizeBtn">Optimize Budget</button></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr style="border:none;height:1px;background:rgba(255,255,255,.02);margin:12px 0">
+
+                    <div>
+                        <div class="muted">Transactions</div>
+                        <table id="txTable">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Category</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+                            <label class="small muted">Show last</label>
+                            <select id="showCount">
+                                <option>10</option>
+                                <option>25</option>
+                                <option>50</option>
+                            </select>
+                            <button id="clearBtn"
+                                style="background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,.03);">Clear
+                                all</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:12px">
+                    <div class="muted">Alerts</div>
+                    <div id="alertsBox" style="margin-top:8px"></div>
+                </div>
+            </div>
+
+            <aside>
+                <div class="card">
+                    <div class="muted">Goals</div>
+                    <div style="display:flex;gap:8px;flex-direction:column;margin-top:8px">
+                        <input id="goalName" placeholder="Goal (e.g., Trip fund)" />
+                        <input id="goalTarget" placeholder="Target ₹" type="number" />
+                        <div style="display:flex;gap:8px"><button id="addGoalBtn">Add goal</button><button id="syncBtn"
+                                style="background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,.03);">Export
+                                JSON</button></div>
+                    </div>
+                    <div id="goalsList" style="margin-top:10px"></div>
+                </div>
+
+                <div class="card" style="margin-top:12px">
+                    <div class="muted">Insights</div>
+                    <div id="insights" style="margin-top:8px"></div>
+                </div>
+
+                <div class="card" style="margin-top:12px">
+                    <div class="muted">Settings</div>
+                    <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
+                        <label class="small muted">Alert threshold (%)</label>
+                        <input id="alertThreshold" type="number" value="90" />
+                        <label class="small muted">Select month (for prediction)</label>
+                        <input id="monthPicker" type="month" />
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <footer>Single-file demo • Data saved locally in your browser</footer>
+    </div>
+
+    <script>
+        // --- Simple client-side Intelligent Finance Manager ---
+        // Data model persisted to localStorage. This is a demo; for production use a backend and stronger NLP.
+
+        const DEFAULT_CATEGORIES = {
+            "Groceries": 3000,
+            "Transport": 1500,
+            "Eating Out": 2000,
+            "Books": 1000,
+            "Utilities": 1500,
+            "Other": 1000
+        };
+
+        // Basic keyword rules for auto-classification (very small NLP substitute)
+        const KEYWORDS = {
+            "Groceries": ["grocery", "supermarket", "mart", "veg", "fruit", "shop", "market"],
+            "Transport": ["uber", "ola", "bus", "train", "metro", "taxi", "auto", "fuel", "petrol"],
+            "Eating Out": ["cafe", "coffee", "restaurant", "dosa", "pizza", "burger", "canteen", "eat", "lunch", "dinner"],
+            "Books": ["book", "textbook", "notes", "stationery", "pen", "notebook"],
+            "Utilities": ["electric", "net", "internet", "wifi", "bill", "water", "phone"]
+        };
+
+        // Helpers for storage
+        function loadState() {
+            const raw = localStorage.getItem('sfin_state');
+            if (!raw) return { tx: [], categories: DEFAULT_CATEGORIES, monthlyBudget: 0, goals: [], alertThreshold: 90 };
+            try { return JSON.parse(raw) } catch (e) { return { tx: [], categories: DEFAULT_CATEGORIES, monthlyBudget: 0, goals: [], alertThreshold: 90 } }
+        }
+        function saveState() { localStorage.setItem('sfin_state', JSON.stringify(state)); }
+
+        let state = loadState();
+
+        // UI refs
+        const descEl = document.getElementById('desc');
+        const amountEl = document.getElementById('amount');
+        const typeEl = document.getElementById('type');
+        const addBtn = document.getElementById('addBtn');
+        const autoCat = document.getElementById('autoCat');
+        const txTableBody = document.querySelector('#txTable tbody');
+        const balanceEl = document.getElementById('balance');
+        const monthlyBudgetEl = document.getElementById('monthlyBudget');
+        const budgetInput = document.getElementById('budgetInput');
+        const setBudgetBtn = document.getElementById('setBudgetBtn');
+        const categoryBudgets = document.getElementById('categoryBudgets');
+        const addCatBtn = document.getElementById('addCatBtn');
+        const catName = document.getElementById('catName');
+        const catBudget = document.getElementById('catBudget');
+        const alertsBox = document.getElementById('alertsBox');
+        const pieCtx = document.getElementById('pieChart');
+        const projectedEl = document.getElementById('projected');
+        const recommendationEl = document.getElementById('recommendation');
+        const optimizeBtn = document.getElementById('optimizeBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const showCount = document.getElementById('showCount');
+        const goalsList = document.getElementById('goalsList');
+        const addGoalBtn = document.getElementById('addGoalBtn');
+        const goalName = document.getElementById('goalName');
+        const goalTarget = document.getElementById('goalTarget');
+        const insights = document.getElementById('insights');
+        const alertThresholdEl = document.getElementById('alertThreshold');
+        const monthPicker = document.getElementById('monthPicker');
+        const syncBtn = document.getElementById('syncBtn');
+
+        // Initialize UI values
+        function init() {
+            if (!state.categories) state.categories = DEFAULT_CATEGORIES;
+            monthlyBudgetEl.textContent = formatNum(state.monthlyBudget || 0);
+            alertThresholdEl.value = state.alertThreshold || 90;
+            renderCategoryBudgets();
+            renderTransactions();
+            renderGoals();
+            computeAll();
+        }
+
+        // Format
+        function formatNum(n) {
+            return Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+        }
+
+        // Very small NLP: pick category based on keywords, else "Other"
+        function predictCategory(text) {
+            const t = (text || '').toLowerCase();
+            for (const [cat, arr] of Object.entries(KEYWORDS)) {
+                for (const kw of arr) { if (t.includes(kw)) return cat }
+            }
+            // try matching category names
+            for (const cat of Object.keys(state.categories || {})) {
+                if (t.includes(cat.toLowerCase())) return cat;
+            }
+            return 'Other';
+        }
+
+        // Add transaction
+        addBtn.addEventListener('click', () => {
+            const desc = descEl.value.trim();
+            const amt = parseFloat(amountEl.value);
+            if (!desc || isNaN(amt)) return alert('Please provide description and amount');
+            const kind = typeEl.value;
+            const signed = kind === 'expense' ? -Math.abs(amt) : Math.abs(amt);
+            const cat = predictCategory(desc);
+            autoCat.textContent = cat;
+            const tx = { id: Date.now(), desc, amount: signed, category: cat, date: new Date().toISOString() };
+            state.tx.unshift(tx);
+            saveState();
+            descEl.value = ''; amountEl.value = '';
+            renderTransactions(); computeAll();
+        });
+
+        // Quick tags
+        document.querySelectorAll('.tagBtn').forEach(b => b.addEventListener('click', e => {
+            descEl.value = b.textContent + ' — ' + (descEl.value || '');
+            autoCat.textContent = predictCategory(descEl.value);
+        }))
+
+        // Set monthly budget
+        setBudgetBtn.addEventListener('click', () => {
+            const v = parseFloat(budgetInput.value);
+            if (isNaN(v) || v < 0) return alert('Invalid budget');
+            state.monthlyBudget = v; monthlyBudgetEl.textContent = formatNum(v); saveState(); computeAll();
+        });
+
+        // Category budgets
+        function renderCategoryBudgets() {
+            categoryBudgets.innerHTML = '';
+            for (const [name, amt] of Object.entries(state.categories || {})) {
+                const wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.gap = '8px'; wrap.style.alignItems = 'center';
+                wrap.innerHTML = `<div style="flex:1">${name} <div class="small muted">₹ ${formatNum(amt)}</div></div><div><button data-cat="${name}" class="editCat">Edit</button></div>`;
+                categoryBudgets.appendChild(wrap);
+            }
+            document.querySelectorAll('.editCat').forEach(btn => btn.addEventListener('click', e => {
+                const c = e.currentTarget.dataset.cat; const newVal = prompt('Set monthly budget for ' + c, state.categories[c] || 0);
+                if (newVal !== null) { state.categories[c] = parseFloat(newVal) || 0; saveState(); renderCategoryBudgets(); computeAll(); }
+            }))
+        }
+
+        addCatBtn.addEventListener('click', () => {
+            const name = catName.value.trim(); const amt = parseFloat(catBudget.value) || 0;
+            if (!name) return; state.categories[name] = amt; catName.value = ''; catBudget.value = ''; saveState(); renderCategoryBudgets(); computeAll();
+        })
+
+        // Render transactions table
+        function renderTransactions() {
+            txTableBody.innerHTML = '';
+            const limit = parseInt(showCount.value) || 10;
+            const items = state.tx.slice(0, limit);
+            for (const t of items) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${escapeHtml(t.desc)}</td><td>${escapeHtml(t.category)}</td><td>${t.amount < 0 ? '-' : ''}₹ ${formatNum(Math.abs(t.amount))}</td><td>${new Date(t.date).toLocaleString()}</td>`;
+                txTableBody.appendChild(tr);
+            }
+        }
+
+        showCount.addEventListener('change', renderTransactions);
+
+        // Clear
+        clearBtn.addEventListener('click', () => { if (confirm('Clear all transactions?')) { state.tx = []; saveState(); renderTransactions(); computeAll(); } })
+
+        // Goals
+        addGoalBtn.addEventListener('click', () => {
+            const name = goalName.value.trim(); const target = parseFloat(goalTarget.value);
+            if (!name || isNaN(target)) return alert('Enter valid goal and target');
+            state.goals = state.goals || [];
+            state.goals.push({ id: Date.now(), name, target, progress: 0 }); goalName.value = ''; goalTarget.value = ''; saveState(); renderGoals(); computeAll();
+        });
+
+        function renderGoals() {
+            goalsList.innerHTML = ''; (state.goals || []).forEach(g => {
+                const div = document.createElement('div'); div.style.marginBottom = '8px';
+                const current = computeGoalProgress(g);
+                div.innerHTML = `<div style="display:flex;justify-content:space-between"><div><strong>${g.name}</strong><div class="small muted">Target ₹ ${formatNum(g.target)}</div></div><div style="text-align:right">${formatNum(current)} / ${formatNum(g.target)}</div></div><div class="progress" style="margin-top:6px"><i style="width:${Math.min(100, (current / g.target * 100) || 0)}%"></i></div>`;
+                goalsList.appendChild(div);
+            })
+        }
+
+        function computeGoalProgress(g) {
+            // naive: sum of transactions tagged with goal name
+            const matches = (state.tx || []).filter(t => t.desc.toLowerCase().includes(g.name.toLowerCase()));
+            return matches.reduce((s, t) => s + (t.amount > 0 ? t.amount : 0), 0);
+        }
+
+        // Insights & compute
+        let pieChart;
+        function computeAll() {
+            // balance
+            const bal = (state.tx || []).reduce((s, t) => s + (t.amount || 0), 0);
+            balanceEl.textContent = formatNum(bal);
+
+            // category spend totals (only negative amounts = expenses)
+            const catTotals = {};
+            for (const c of Object.keys(state.categories || {})) catTotals[c] = 0;
+            catTotals['Other'] = catTotals['Other'] || 0;
+            for (const t of state.tx || []) {
+                if (t.amount < 0) { catTotals[t.category] = (catTotals[t.category] || 0) + Math.abs(t.amount) }
+            }
+
+            // pie chart
+            const labels = Object.keys(catTotals);
+            const data = labels.map(l => catTotals[l]);
+            if (pieChart) pieChart.destroy();
+            pieChart = new Chart(pieCtx, {
+                type: 'doughnut', data: { labels, datasets: [{ data, backgroundColor: [] }], }, options: { plugins: { legend: { position: 'bottom' } }, maintainAspectRatio: false }
+            });
+
+            // projected spending for selected month
+            const selectedMonth = monthPicker.value || (new Date()).toISOString().slice(0, 7);
+            const monthTx = (state.tx || []).filter(t => t.date.slice(0, 7) === selectedMonth);
+            const daysSoFar = new Date().getDate();
+            const totalSpentSoFar = monthTx.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+            const avgPerDay = daysSoFar > 0 ? totalSpentSoFar / daysSoFar : 0;
+            const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+            const projected = avgPerDay * daysInMonth;
+            projectedEl.textContent = formatNum(projected);
+
+            // recommendations
+            let rec = '—';
+            if (state.monthlyBudget && projected > state.monthlyBudget) {
+                const diff = projected - state.monthlyBudget;
+                rec = `Projected to exceed monthly budget by ₹ ${formatNum(diff)}. Consider reducing Eating Out / Transport by ${(Math.ceil((diff / (state.monthlyBudget || 1)) * 100))}% overall.`
+            } else if (state.monthlyBudget) {
+                rec = 'On track with current budget.'
+            }
+            recommendationEl.textContent = rec;
+
+            // alerts (category budgets)
+            alertsBox.innerHTML = '';
+            const threshold = (state.alertThreshold || 90) / 100;
+            for (const [c, bud] of Object.entries(state.categories || {})) {
+                const spent = catTotals[c] || 0;
+                const percent = bud > 0 ? (spent / bud) : 0;
+                if (bud > 0 && percent >= threshold) {
+                    const el = document.createElement('div'); el.className = 'alert warn'; el.textContent = `${c}: ${Math.round(percent * 100)}% of category budget used (₹ ${formatNum(spent)} / ₹ ${formatNum(bud)})`;
+                    alertsBox.appendChild(el);
+                }
+                if (bud > 0 && spent >= bud) {
+                    const el = document.createElement('div'); el.className = 'alert danger'; el.textContent = `ALERT: ${c} budget exceeded! Spent ₹ ${formatNum(spent)} (budget ₹ ${formatNum(bud)})`;
+                    alertsBox.appendChild(el);
+                }
+            }
+
+            // insights
+            insights.innerHTML = '';
+            const biggest = Object.entries(catTotals).sort((a, b) => b[1] - a[1])[0];
+            if (biggest) insights.innerHTML = `<div class="small muted">Highest spending category</div><div style="font-weight:700">${biggest[0]} — ₹ ${formatNum(biggest[1])}</div>`;
+
+            renderGoals(); saveState();
+        }
+
+        // Simple optimizer: suggest cuts by category
+        optimizeBtn.addEventListener('click', () => {
+            // find categories over 20% of spend and suggest 10-30% cuts
+            const catTotals = {};
+            for (const c of Object.keys(state.categories || {})) catTotals[c] = 0; catTotals['Other'] = catTotals['Other'] || 0;
+            for (const t of state.tx || []) { if (t.amount < 0) catTotals[t.category] = (catTotals[t.category] || 0) + Math.abs(t.amount) }
+            const total = Object.values(catTotals).reduce((s, a) => s + a, 0);
+            const suggestions = [];
+            for (const [c, v] of Object.entries(catTotals)) {
+                if (total > 0 && v / total > 0.12) {
+                    const cut = Math.round(v * 0.18);
+                    suggestions.push(`Reduce ${c} by ~₹ ${formatNum(cut)} (about ${Math.round((cut / v) * 100)}%)`);
+                }
+            }
+            if (suggestions.length === 0) suggestionBox('No strong optimization opportunities found.');
+            else suggestionBox(suggestions.join('\n'));
+        });
+
+        function suggestionBox(txt) { alert(txt) }
+
+        // small helpers
+        function escapeHtml(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }
+
+        // export state JSON
+        syncBtn.addEventListener('click', () => {
+            const dataStr = JSON.stringify(state, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'sfin-export.json'; a.click(); URL.revokeObjectURL(url);
+        })
+
+        // small: update autoCat when desc typed
+        descEl.addEventListener('input', () => { autoCat.textContent = predictCategory(descEl.value) });
+
+        // load threshold
+        alertThresholdEl.addEventListener('change', () => { state.alertThreshold = parseFloat(alertThresholdEl.value) || 90; saveState(); computeAll(); });
+
+        // compute days in chosen month when month changes (for better projection)
+        monthPicker.addEventListener('change', computeAll);
+
+        // init
+        init();
+
+    </script>
+</body>
+
+</html>
